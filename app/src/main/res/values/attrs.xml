@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="LimitScrollSeekBar">
+        <attr name="limit_max_progress" format="integer"/>
+        <attr name="limit_min_progress" format="integer"/>
+    </declare-styleable>
+</resources>
