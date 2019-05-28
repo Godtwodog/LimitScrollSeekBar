@@ -1,5 +1,7 @@
 package com.god2dog.limitscrollseekbar;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -31,6 +33,7 @@ public class LimitScrollSeekBar extends View {
     private Context mContext;
     private Paint mBarPaint;
     private Paint mProgressBackgroundPaint;
+    private Paint mFinishedPaint;
     private Paint mTextPaint;
 
     private int mMaxProgress = 100;
@@ -48,9 +51,12 @@ public class LimitScrollSeekBar extends View {
     private int mHeight;
 
     private RectF line = new RectF();
+    private RectF mFinishedLine = new RectF();
     private int mLineCorners;
 
     private Bitmap bitmap;
+    float material = 0;
+    ValueAnimator anim;
 
 
     public LimitScrollSeekBar(Context context) {
@@ -67,6 +73,10 @@ public class LimitScrollSeekBar extends View {
         mProgressBackgroundPaint.setStyle(Paint.Style.FILL);
         mProgressBackgroundPaint.setColor(0xFFD7D7D7);
 
+        mFinishedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mFinishedPaint.setStyle(Paint.Style.FILL);
+        mFinishedPaint.setColor(0xFFFD444A);
+
         mBarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBarPaint.setStyle(Paint.Style.FILL);
     }
@@ -79,15 +89,47 @@ public class LimitScrollSeekBar extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        int offest = (mLineWidth * mCurrentProgress / 100);
 
+        mFinishedLine.set(mLineLeft,mLineTop,offest+mWidth,mLineBottom);
+        Log.i(TAG, "onDraw: mLineLeft"+mLineLeft);
+        Log.i(TAG, "onDraw: mLineTop"+mLineTop);
+        Log.i(TAG, "onDraw: mLineBottom"+mLineBottom);
+        Log.i(TAG, "onDraw: offest"+offest);
         canvas.drawRoundRect(line, mLineCorners, mLineCorners, mProgressBackgroundPaint);
 
-        int offest =  (mLineWidth * mCurrentProgress / 100);
-        Log.i(TAG, "onDraw: "+mCurrentProgress);
+        canvas.drawRoundRect(mFinishedLine,mLineCorners,mLineCorners,mFinishedPaint);
+
         canvas.save();
-        canvas.translate(offest,0);
-        canvas.drawBitmap(bitmap, left, top, null);
+        canvas.translate(offest, 0);
+        drawDefault(canvas);
         canvas.restore();
+
+    }
+
+    private void drawDefault(Canvas canvas) {
+        int centerX = mWidth;
+        int centerY = mHeight / 2;
+        int radius = (int) (mWidth * 0.5f);
+        // 绘制Shadow
+        mBarPaint.setStyle(Paint.Style.FILL);
+        int barShadowRadius = (int) (radius * 0.95f);
+        canvas.save();
+        canvas.translate(0, radius * 0.25f);
+        canvas.scale(1 + (0.1f * material), 1 + (0.1f * material), centerX, centerY);
+        RadialGradient shadowGradient = new RadialGradient(centerX, centerY, barShadowRadius, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.CLAMP);
+        mBarPaint.setShader(shadowGradient);
+        canvas.drawCircle(centerX, centerY, barShadowRadius, mBarPaint);
+        mBarPaint.setShader(null);
+        canvas.restore();
+        // 绘制Body
+        mBarPaint.setStyle(Paint.Style.FILL);
+        mBarPaint.setColor(0xFFFA584A);
+        canvas.drawCircle(centerX, centerY, radius, mBarPaint);
+        // 绘制Border
+        mBarPaint.setStyle(Paint.Style.STROKE);
+        mBarPaint.setColor(0xFFD7D7D7);
+        canvas.drawCircle(centerX, centerY, radius, mBarPaint);
 
     }
 
@@ -104,53 +146,26 @@ public class LimitScrollSeekBar extends View {
         } else {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
-    }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        int seekBarRadius = h / 2;
+        int seekBarRadius = heightSize / 2;
         mLineLeft = seekBarRadius;
-        mLineRight = w - seekBarRadius;
+        mLineRight = widthSize - seekBarRadius;
         mLineTop = seekBarRadius - seekBarRadius / 4;
         mLineBottom = seekBarRadius + seekBarRadius / 4;
         mLineWidth = mLineRight - mLineLeft;
-        Log.i(TAG, "onSizeChanged: "+mLineWidth);
+        Log.i(TAG, "onSizeChanged: " + mLineWidth);
         line.set(mLineLeft, mLineTop, mLineRight, mLineBottom);
         mLineCorners = (int) ((mLineBottom - mLineTop) * 0.5f);
 
-        mWidth = (int) (h * 0.5);
-        mHeight = h;
-        left = seekBarRadius - mWidth / 2;
-        top = seekBarRadius - mHeight / 2;
-        right = seekBarRadius + mWidth / 2;
-        bottom = seekBarRadius + mHeight / 2;
-        bitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
-
-        int bmpCenterX = bitmap.getWidth() / 2;
-        int bmpCenterY = bitmap.getHeight() / 2;
-        int bmpRadius = (int) (mWidth * 0.5f);
-        Canvas defaultCanvas = new Canvas(bitmap);
-        // 绘制Shadow
-        mBarPaint.setStyle(Paint.Style.FILL);
-        int barShadowRadius = (int) (bmpRadius * 0.95f);
-        defaultCanvas.save();
-        defaultCanvas.translate(0, bmpRadius * 0.25f);
-        RadialGradient shadowGradient = new RadialGradient(bmpCenterX, bmpCenterY, barShadowRadius, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.CLAMP);
-        mBarPaint.setShader(shadowGradient);
-        defaultCanvas.drawCircle(bmpCenterX, bmpCenterY, barShadowRadius, mBarPaint);
-        mBarPaint.setShader(null);
-        defaultCanvas.restore();
-        // 绘制Body
-        mBarPaint.setStyle(Paint.Style.FILL);
-        mBarPaint.setColor(0xFFFA584A);
-        defaultCanvas.drawCircle(bmpCenterX, bmpCenterY, bmpRadius, mBarPaint);
-        // 绘制Border
-        mBarPaint.setStyle(Paint.Style.STROKE);
-        mBarPaint.setColor(0xFFD7D7D7);
-        defaultCanvas.drawCircle(bmpCenterX, bmpCenterY, bmpRadius, mBarPaint);
-
+        mWidth = (int) (heightSize * 0.5);
+        mHeight = heightSize;
+        Log.i(TAG, "onMeasure: " + mWidth);
+        left = seekBarRadius - widthSize / 2;
+        right = seekBarRadius + widthSize / 2;
+        top = seekBarRadius - heightSize / 2;
+        bottom = seekBarRadius + heightSize / 2;
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -163,27 +178,53 @@ public class LimitScrollSeekBar extends View {
                 boolean isTouchInside = false;
                 x = event.getX();
                 y = event.getY();
-                int offest =  mLineWidth * mCurrentProgress / 100;
-                if (x > left + offest && x < right + offest && y > top && y < bottom){
+                int offest = mLineWidth * mCurrentProgress / 100;
+                if (x > left + offest && x < right + offest && y > top && y < bottom) {
                     isTouchInside = true;
+//                    Toast.makeText(mContext, "here", Toast.LENGTH_SHORT).show();
                 }
-                return  isTouchInside;
+                return isTouchInside;
             case MotionEvent.ACTION_MOVE:
+                material = material >=1 ? 1:material +0.1f;
                 x = event.getX();
-                if (x <= mLineLeft){
+                if (x <= mLineLeft) {
                     mCurrentProgress = 0;
-                }else if (x >= mLineRight){
+                } else if (x >= mLineRight) {
                     mCurrentProgress = 100;
-                }else {
-                    mCurrentProgress = (int) ((x - mLineLeft ) / mLineWidth *100);
+                } else {
+                    mCurrentProgress = (int) ((x - mLineLeft) / mLineWidth * 100);
                 }
-                Log.i(TAG, "onTouchEvent: "+mCurrentProgress);
+                Log.i(TAG, "onTouchEvent: " + mCurrentProgress);
                 invalidate();
                 break;
             case MotionEvent.ACTION_UP:
+                materialRestore();
                 break;
         }
 
         return super.onTouchEvent(event);
     }
+
+    private void materialRestore() {
+        if (anim != null) {
+            anim.cancel();
+        }
+        anim = ValueAnimator.ofFloat(material, 0);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                material = (float) animation.getAnimatedValue();
+                invalidate();
+            }
+        });
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                material = 0;
+                invalidate();
+            }
+        });
+        anim.start();
+    }
+
 }
