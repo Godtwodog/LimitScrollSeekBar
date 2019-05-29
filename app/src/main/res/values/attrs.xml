@@ -3,5 +3,14 @@
     <declare-styleable name="LimitScrollSeekBar">
         <attr name="limit_max_progress" format="integer"/>
         <attr name="limit_min_progress" format="integer"/>
+        <attr name="isShowBubble" format="boolean"/>
+    </declare-styleable>
+    <declare-styleable name="BubbleView">
+        <attr name="bubbleColor" format="color"/>
+        <attr name="bubbleTextColor" format="color"/>
+        <attr name="bubbleTextSize" format="dimension"/>
+        <attr name="bubbleWidth" format="dimension"/>
+        <attr name="bubbleHeight" format="dimension"/>
+        <attr name="bubbleCornerRadius" format="dimension"/>
     </declare-styleable>
 </resources>

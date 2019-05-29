@@ -57,6 +57,7 @@ public class LimitScrollSeekBar extends View {
     private Bitmap bitmap;
     float material = 0;
     ValueAnimator anim;
+    private boolean isAlwaysShowBubble = false;
 
 
     public LimitScrollSeekBar(Context context) {
@@ -69,6 +70,7 @@ public class LimitScrollSeekBar extends View {
     }
 
     private void initAttrs(Context context, AttributeSet attrs) {
+
         mProgressBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mProgressBackgroundPaint.setStyle(Paint.Style.FILL);
         mProgressBackgroundPaint.setColor(0xFFD7D7D7);
@@ -79,6 +81,9 @@ public class LimitScrollSeekBar extends View {
 
         mBarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBarPaint.setStyle(Paint.Style.FILL);
+
+        TypedArray ta = context.obtainStyledAttributes(attrs,R.styleable.LimitScrollSeekBar);
+        isAlwaysShowBubble = ta.getBoolean(R.styleable.LimitScrollSeekBar_isShowBubble,false);
     }
 
     public LimitScrollSeekBar(Context context, AttributeSet attrs, int defStyleAttr) {
