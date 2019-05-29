@@ -10,6 +10,9 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
+import static com.god2dog.limitscrollseekbar.SizeUtils.dp2px;
+import static com.god2dog.limitscrollseekbar.SizeUtils.sp2px;
+
 class BubbleView extends View {
     private Context mContext;
     private Paint mBubblePaint;
@@ -45,7 +48,9 @@ class BubbleView extends View {
 
         TypedArray ta =context.obtainStyledAttributes(attrs,R.styleable.BubbleView,defStyleAttr,0);
         mBubbleColor = ta.getColor(R.styleable.BubbleView_bubbleColor,0xFFFA584A);
-        mBubbleTextSize = ta.getDimensionPixelSize(R.styleable.BubbleView_bubbleTextSize,SizeUtils.sp2px(mContext,12));
+        mBubbleTextSize = ta.getDimensionPixelSize(R.styleable.BubbleView_bubbleTextSize,sp2px(12));
+
+        ta.recycle();
 
     }
 
@@ -70,14 +75,14 @@ class BubbleView extends View {
         float x1 = (float) (getMeasuredWidth() / 2f - Math.sqrt(3) / 2f * mBubbleRadius);
         float y1 = 3 / 2f * mBubbleRadius;
         mBubblePath.quadTo(
-                x1 - SizeUtils.dp2px(mContext,2), y1 - SizeUtils.dp2px(mContext,2),
+                x1 - dp2px(2), y1 - dp2px(2),
                 x1, y1
         );
         mBubblePath.arcTo(mBubbleRectF, 150, 240);
 
         float x2 = (float) (getMeasuredWidth() / 2f + Math.sqrt(3) / 2f * mBubbleRadius);
         mBubblePath.quadTo(
-                x2 + SizeUtils.dp2px(mContext,2), y1 - SizeUtils.dp2px(mContext,2),
+                x2 + dp2px(2), y1 - dp2px(2),
                 x0, y0
         );
         mBubblePath.close();

@@ -6,10 +6,12 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RadialGradient;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.support.annotation.Nullable;
@@ -18,6 +20,9 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
+
+import static com.god2dog.limitscrollseekbar.SizeUtils.dp2px;
+import static com.god2dog.limitscrollseekbar.SizeUtils.sp2px;
 
 
 /**
@@ -30,11 +35,10 @@ import android.widget.Toast;
  */
 public class LimitScrollSeekBar extends View {
     private String TAG = "LimitScrollSeekBar";
-    private Context mContext;
     private Paint mBarPaint;
     private Paint mProgressBackgroundPaint;
     private Paint mFinishedPaint;
-    private Paint mTextPaint;
+
 
     private int mMaxProgress = 100;
     private int mMinProgress = 0;
@@ -54,11 +58,40 @@ public class LimitScrollSeekBar extends View {
     private RectF mFinishedLine = new RectF();
     private int mLineCorners;
 
-    private Bitmap bitmap;
+
     float material = 0;
     ValueAnimator anim;
     private boolean isAlwaysShowBubble = false;
 
+    private Paint mTextPaint;
+    //背景图片
+    private int img;
+    private Bitmap bitmap;
+    private float imgWidth, imgHeight;
+
+    private Paint mBottomTextPaint;
+    //文本字体颜色
+    private int mTitleTextColor;
+    //文本字体大小
+    private float mTitleTextSize;
+    //文本内容
+    private String mTitleText;
+
+    private float textCenterX;
+
+    private float textBaselineY;
+
+    private Paint.FontMetrics fm;
+    private Rect seekRect;
+    private int mLineBackgroundHeight;
+
+    private Rect mRectText;
+    private int mTextSpace;
+
+    private int mCircleCenterX;
+    private int mCircleCenterY;
+
+    private int mBubbleMarginBottom;
 
     public LimitScrollSeekBar(Context context) {
         super(context);
@@ -82,28 +115,73 @@ public class LimitScrollSeekBar extends View {
         mBarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBarPaint.setStyle(Paint.Style.FILL);
 
-        TypedArray ta = context.obtainStyledAttributes(attrs,R.styleable.LimitScrollSeekBar);
-        isAlwaysShowBubble = ta.getBoolean(R.styleable.LimitScrollSeekBar_isShowBubble,false);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.LimitScrollSeekBar);
+        isAlwaysShowBubble = ta.getBoolean(R.styleable.LimitScrollSeekBar_isShowBubble, false);
+        img = ta.getResourceId(R.styleable.LimitScrollSeekBar_bubbleImg, R.mipmap.ic_launcher);
+        mTitleTextSize = ta.getDimensionPixelSize(R.styleable.LimitScrollSeekBar_titleTextSize, sp2px(12));
+        mTitleTextColor = ta.getColor(R.styleable.LimitScrollSeekBar_titleTextColor, 0xFFFFFFFF);
+        mLineBackgroundHeight = ta.getDimensionPixelSize(R.styleable.LimitScrollSeekBar_lineHeight,dp2px(12));
+        mBubbleMarginBottom = ta.getDimensionPixelSize(R.styleable.LimitScrollSeekBar_bubbleMarginBottom,dp2px(15));
+        ta.recycle();
+
+        getImgWH();
+
+
+        mTextPaint = new Paint();
+        mTextPaint.setAntiAlias(true);
+        mTextPaint.setTextSize(mTitleTextSize);
+        mTextPaint.setColor(mTitleTextColor);
+        mTextPaint.setTextAlign(Paint.Align.CENTER);
+
+        mBottomTextPaint = new Paint();
+        mBottomTextPaint.setAntiAlias(true);
+        mBottomTextPaint.setTextSize(sp2px(9));
+        mBottomTextPaint.setColor(0xFF959595);
+//        //设置控件的padding 给提示文字留出位置
+//        setPadding((int) Math.ceil(imgWidth) / 2, 0, (int) Math.ceil(imgHeight) / 2, (int) Math.ceil(imgHeight) + 10);
+
+        mRectText = new Rect();
+        mTextSpace = dp2px(2);
+
     }
 
     public LimitScrollSeekBar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initAttrs(context, attrs);
+
+
+    }
+
+    private void getImgWH() {
+        bitmap = BitmapFactory.decodeResource(getResources(), img);
+        imgWidth = bitmap.getWidth();
+        imgHeight = bitmap.getHeight();
+
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        drawBottomText(canvas);
+        //定位文本位置
+        setTextLocation();
+        //定位背景图片的位置
         int offest = (mLineWidth * mCurrentProgress / 100);
+        float bm_x = mCircleCenterX + offest - imgWidth / 2;
+        float bm_y = mCircleCenterY - imgHeight-mBubbleMarginBottom;
 
-        mFinishedLine.set(mLineLeft,mLineTop,offest+mWidth,mLineBottom);
-        Log.i(TAG, "onDraw: mLineLeft"+mLineLeft);
-        Log.i(TAG, "onDraw: mLineTop"+mLineTop);
-        Log.i(TAG, "onDraw: mLineBottom"+mLineBottom);
-        Log.i(TAG, "onDraw: offest"+offest);
+
+        //计算文字的中心位置在bitmap
+        float text_x = mCircleCenterX+offest;
+        //画背景图
+        canvas.drawBitmap(bitmap, bm_x, bm_y, mTextPaint);
+        canvas.drawText(mTitleText, text_x, textBaselineY , mTextPaint);//画文字
+
+
+        mFinishedLine.set(mLineLeft, mLineTop, offest + mWidth, mLineBottom);
         canvas.drawRoundRect(line, mLineCorners, mLineCorners, mProgressBackgroundPaint);
 
-        canvas.drawRoundRect(mFinishedLine,mLineCorners,mLineCorners,mFinishedPaint);
+        canvas.drawRoundRect(mFinishedLine, mLineCorners, mLineCorners, mFinishedPaint);
 
         canvas.save();
         canvas.translate(offest, 0);
@@ -112,63 +190,98 @@ public class LimitScrollSeekBar extends View {
 
     }
 
+    private void drawBottomText(Canvas canvas) {
+        float x;
+        for (int i = 0; i < 6; i++) {
+            if (i == 5){
+                x= mLineWidth;
+            }else {
+                x = mCircleCenterX +mLineWidth / 5 *i;
+            }
+            canvas.drawText(20*i+"",x,getMeasuredHeight() - mRectText.height(),mBottomTextPaint);
+        }
+    }
+
+
+    private void setTextLocation() {
+        fm = mTextPaint.getFontMetrics();
+        mTitleText = "拿出" + mCurrentProgress + "元做活动";
+        //计算baseline
+        textCenterX = imgWidth / 2;
+        textBaselineY = bitmap.getHeight() / 2+mBubbleMarginBottom;
+    }
+
     private void drawDefault(Canvas canvas) {
-        int centerX = mWidth;
-        int centerY = mHeight / 2;
         int radius = (int) (mWidth * 0.5f);
         // 绘制Shadow
         mBarPaint.setStyle(Paint.Style.FILL);
         int barShadowRadius = (int) (radius * 0.95f);
         canvas.save();
         canvas.translate(0, radius * 0.25f);
-        canvas.scale(1 + (0.1f * material), 1 + (0.1f * material), centerX, centerY);
-        RadialGradient shadowGradient = new RadialGradient(centerX, centerY, barShadowRadius, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.CLAMP);
+        canvas.scale(1 + (0.1f * material), 1 + (0.1f * material), mCircleCenterX, mCircleCenterY);
+        RadialGradient shadowGradient = new RadialGradient(mCircleCenterX, mCircleCenterY, barShadowRadius, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.CLAMP);
         mBarPaint.setShader(shadowGradient);
-        canvas.drawCircle(centerX, centerY, barShadowRadius, mBarPaint);
+        canvas.drawCircle(mCircleCenterX, mCircleCenterY, barShadowRadius, mBarPaint);
         mBarPaint.setShader(null);
         canvas.restore();
         // 绘制Body
         mBarPaint.setStyle(Paint.Style.FILL);
         mBarPaint.setColor(0xFFFA584A);
-        canvas.drawCircle(centerX, centerY, radius, mBarPaint);
+        canvas.drawCircle(mCircleCenterX, mCircleCenterY, radius, mBarPaint);
         // 绘制Border
         mBarPaint.setStyle(Paint.Style.STROKE);
         mBarPaint.setColor(0xFFD7D7D7);
-        canvas.drawCircle(centerX, centerY, radius, mBarPaint);
+        canvas.drawCircle(mCircleCenterX, mCircleCenterY, radius, mBarPaint);
 
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        mTextPaint.setTextSize(mTitleTextSize);
+        mTextPaint.getTextBounds("j", 0, 1, mRectText);
+        int viewWidth = measureWidth(getSuggestedMinimumWidth(), widthMeasureSpec);
+        int viewHeight = (int) (mLineBackgroundHeight *2  +imgHeight  + mRectText.height()+mTextSpace *2 +mBubbleMarginBottom);
 
-        if (heightSize * 2 > widthSize) {
-            setMeasuredDimension(widthSize, (int) (widthSize / 2));
-        } else {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        }
-
-        int seekBarRadius = heightSize / 2;
-        mLineLeft = seekBarRadius;
-        mLineRight = widthSize - seekBarRadius;
-        mLineTop = seekBarRadius - seekBarRadius / 4;
-        mLineBottom = seekBarRadius + seekBarRadius / 4;
+        setMeasuredDimension(viewWidth,viewHeight);
+        int lineCenterY = viewHeight - mRectText.height() - mTextSpace * 2 - mLineBackgroundHeight;
+        mLineTop = lineCenterY - mLineBackgroundHeight / 2;
+        Log.i(TAG, "onMeasure: mLineTop"+mLineTop);
+        mLineBottom = lineCenterY + mLineBackgroundHeight / 2;
+        Log.i(TAG, "onMeasure: mLineBottom"+mLineBottom);
+        mLineLeft =   mLineBackgroundHeight;
+        mLineRight = viewWidth  - mLineBackgroundHeight;
         mLineWidth = mLineRight - mLineLeft;
         Log.i(TAG, "onSizeChanged: " + mLineWidth);
         line.set(mLineLeft, mLineTop, mLineRight, mLineBottom);
         mLineCorners = (int) ((mLineBottom - mLineTop) * 0.5f);
 
-        mWidth = (int) (heightSize * 0.5);
-        mHeight = heightSize;
-        Log.i(TAG, "onMeasure: " + mWidth);
-        left = seekBarRadius - widthSize / 2;
-        right = seekBarRadius + widthSize / 2;
-        top = seekBarRadius - heightSize / 2;
-        bottom = seekBarRadius + heightSize / 2;
+        mHeight = mWidth = (int) (mLineBackgroundHeight * 1.5);
+        mCircleCenterY = lineCenterY;
+        mCircleCenterX = mLineBackgroundHeight ;
+        left = mCircleCenterX -mWidth / 2 ;
+        right = mCircleCenterX  + mWidth / 2;
+        top = mCircleCenterY - mHeight / 2;
+        bottom = mCircleCenterY + mHeight / 2;
+    }
+
+    private int measureWidth(int defaultWidth, int widthMeasureSpec) {
+        int specMode = MeasureSpec.getMode(widthMeasureSpec);
+        int specSize = MeasureSpec.getSize(widthMeasureSpec);
+        switch (specMode) {
+            default:
+            case MeasureSpec.EXACTLY:
+                defaultWidth = specSize;
+                break;
+            case MeasureSpec.AT_MOST:
+                defaultWidth = 2 * specSize / 3;
+                break;
+            case MeasureSpec.UNSPECIFIED:
+                defaultWidth = Math.max(defaultWidth, specSize);
+                break;
+
+        }
+        return defaultWidth;
     }
 
 
@@ -190,7 +303,7 @@ public class LimitScrollSeekBar extends View {
                 }
                 return isTouchInside;
             case MotionEvent.ACTION_MOVE:
-                material = material >=1 ? 1:material +0.1f;
+                material = material >= 1 ? 1 : material + 0.1f;
                 x = event.getX();
                 if (x <= mLineLeft) {
                     mCurrentProgress = 0;

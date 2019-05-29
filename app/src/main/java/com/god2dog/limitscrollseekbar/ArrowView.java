@@ -7,6 +7,8 @@ import android.graphics.Path;
 import android.util.AttributeSet;
 import android.view.View;
 
+import static com.god2dog.limitscrollseekbar.SizeUtils.dp2px;
+
 public class ArrowView extends View {
     private final int mWidth;
     private final int mHeight;
@@ -23,8 +25,8 @@ public class ArrowView extends View {
 
     public ArrowView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mWidth = SizeUtils.dp2px(context, 12);
-        mHeight = SizeUtils.dp2px(context, 7);
+        mWidth = dp2px( 12);
+        mHeight = dp2px( 7);
         mPath = new Path();
         mPath.moveTo(0, 0);
         mPath.lineTo(mWidth, 0);

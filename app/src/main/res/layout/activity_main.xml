@@ -2,12 +2,12 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
    <com.god2dog.limitscrollseekbar.LimitScrollSeekBar
        android:layout_width="match_parent"
-       android:layout_height="40dp"
-
+       android:layout_height="wrap_content"
+       app:bubbleImg="@mipmap/icon_bubble"
        />
 
 </RelativeLayout>

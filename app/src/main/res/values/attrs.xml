@@ -4,6 +4,11 @@
         <attr name="limit_max_progress" format="integer"/>
         <attr name="limit_min_progress" format="integer"/>
         <attr name="isShowBubble" format="boolean"/>
+        <attr name="bubbleImg" format="reference"/>
+        <attr name="titleTextSize" format="dimension"/>
+        <attr name="titleTextColor" format="color"/>
+        <attr name="lineHeight" format="dimension"/>
+        <attr name="bubbleMarginBottom" format="dimension"/>
     </declare-styleable>
     <declare-styleable name="BubbleView">
         <attr name="bubbleColor" format="color"/>
