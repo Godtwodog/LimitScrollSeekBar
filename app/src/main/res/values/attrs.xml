@@ -5,6 +5,7 @@
         <attr name="limit_min_progress" format="integer"/>
         <attr name="isShowBubble" format="boolean"/>
         <attr name="bubbleImg" format="reference"/>
+        <attr name="arrowImageSrc" format="reference"/>
         <attr name="titleTextSize" format="dimension"/>
         <attr name="titleTextColor" format="color"/>
         <attr name="lineHeight" format="dimension"/>

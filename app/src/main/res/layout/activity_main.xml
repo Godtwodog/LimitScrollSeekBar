@@ -1,13 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
    <com.god2dog.limitscrollseekbar.LimitScrollSeekBar
+       android:id="@+id/limit_scroll_seek_bar"
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
-       app:bubbleImg="@mipmap/icon_bubble"
+       app:bubbleImg="@mipmap/ic_oval"
+       app:arrowImageSrc="@mipmap/ic_arrow"
        />
 
-</RelativeLayout>
+   <Button
+       android:id="@+id/btn_plus"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:text="plus"
+       />
+   <Button
+       android:id="@+id/btn_minus"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_marginTop="10dp"
+       android:text="minus"
+       />
+
+</LinearLayout>
